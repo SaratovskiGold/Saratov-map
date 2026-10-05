@@ -71,6 +71,7 @@ button,input{font:inherit}
 .answers button{border:0;background:#e7eff0;color:var(--navy);border-radius:13px;padding:13px;cursor:pointer;font-weight:800}
 .answers button:hover{background:#d6e7e9}
 .result{min-height:26px;font-weight:900;margin-top:12px}
+.quiz-final{padding:38px 22px}.quiz-final h3{font-size:30px;color:var(--navy);margin:5px 0 18px}.final-score{font-size:22px;margin:10px 0}.final-wrong{font-size:17px;color:var(--muted)}.final-message{font-size:21px;font-weight:900;color:var(--blue);margin:22px auto;max-width:620px;line-height:1.4}.restart-quiz{border:0;background:var(--navy);color:white;border-radius:13px;padding:14px 20px;cursor:pointer;font-weight:800}.restart-quiz:hover{background:var(--blue)}
 .aboutgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .info{background:#f4f0e7;border-radius:20px;padding:20px}
 .info h3{margin-top:0;color:var(--navy)}
@@ -197,21 +198,61 @@ document.getElementById('search').addEventListener('input',e=>{
  renderGrid(districts.filter(d=>(d.name+' '+d.center).toLowerCase().includes(q)));
 });
 
-let score=0,locked=false;
-function newQuiz(){
+const QUIZ_TOTAL=10;
+let score=0,wrong=0,questionNumber=0,locked=false,quizQuestions=[];
+function startQuiz(){
+ score=0;
+ wrong=0;
+ questionNumber=0;
  locked=false;
- const correct=districts[Math.floor(Math.random()*districts.length)];
+ quizQuestions=[...districts].sort(()=>Math.random()-.5).slice(0,QUIZ_TOTAL);
+ newQuiz();
+}
+function newQuiz(){
+ if(questionNumber>=QUIZ_TOTAL){showQuizResult();return}
+ locked=false;
+ const correct=quizQuestions[questionNumber];
  let opts=[correct];
  while(opts.length<4){const x=districts[Math.floor(Math.random()*districts.length)];if(!opts.includes(x))opts.push(x)}
  opts.sort(()=>Math.random()-.5);
- document.getElementById('quizbody').innerHTML=`<div class="quiz-card">${img(correct,'quiz-img')}<p><strong>Счёт: ${score}</strong></p><div class="answers">${opts.map(o=>`<button onclick="answer('${o.name.replaceAll("'","\\'")}','${correct.name.replaceAll("'","\\'")}')">${o.name} район</button>`).join('')}</div><div class="result"></div></div>`;
+ document.getElementById('quizbody').innerHTML=`<div class="quiz-card">
+ ${img(correct,'quiz-img')}
+ <p><strong>Вопрос ${questionNumber+1} из ${QUIZ_TOTAL}</strong> · Правильных ответов: ${score}</p>
+ <div class="answers">${opts.map(o=>`<button onclick="answer('${o.name.replaceAll("'","\\'")}','${correct.name.replaceAll("'","\\'")}')">${o.name} район</button>`).join('')}</div>
+ <div class="result"></div>
+ </div>`;
 }
 function answer(chosen,correct){
- if(locked)return;locked=true;const r=document.querySelector('.result');
- if(chosen===correct){score++;r.textContent='✅ Верно!'}else r.textContent='❌ Правильный ответ: '+correct+' район';
- setTimeout(newQuiz,1100);
+ if(locked)return;
+ locked=true;
+ const r=document.querySelector('.result');
+ if(chosen===correct){
+   score++;
+   r.textContent='✅ Верно!';
+ }else{
+   wrong++;
+   r.textContent='❌ Неверно. Правильный ответ: '+correct+' район';
+ }
+ questionNumber++;
+ setTimeout(()=>{
+   if(questionNumber>=QUIZ_TOTAL) showQuizResult();
+   else newQuiz();
+ },1100);
 }
-newQuiz();
+function showQuizResult(){
+ locked=true;
+ const message=wrong>2
+   ? '😕 Ты не справился с заданием. Попробуй ещё раз!'
+   : '🎉 Ты молодец! Ты справился с этим трудным заданием!';
+ document.getElementById('quizbody').innerHTML=`<div class="quiz-card quiz-final">
+   <h3>🏁 Викторина завершена!</h3>
+   <p class="final-score">Твой результат: <strong>${score} из ${QUIZ_TOTAL}</strong></p>
+   <p class="final-wrong">Ошибок: <strong>${wrong}</strong></p>
+   <p class="final-message">${message}</p>
+   <button class="restart-quiz" onclick="startQuiz()">🔄 Пройти викторину ещё раз</button>
+ </div>`;
+}
+startQuiz();
 </script>
 </body>
 </html>
