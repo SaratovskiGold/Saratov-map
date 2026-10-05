@@ -69,7 +69,7 @@ button,input{font:inherit}
 .quiz-img{height:260px;width:100%;object-fit:contain;background:#f4f0e7;border-radius:16px}
 .answers{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
 .answers button{border:0;background:#e7eff0;color:var(--navy);border-radius:13px;padding:13px;cursor:pointer;font-weight:800}
-.answers button:hover{background:#d6e7e9}
+.answers button:hover{background:#d6e7e9}.answers button:disabled{opacity:.75;cursor:default}.quiz-progress{font-size:17px;margin:15px 0 5px}
 .result{min-height:26px;font-weight:900;margin-top:12px}
 .quiz-final{padding:38px 22px}.quiz-final h3{font-size:30px;color:var(--navy);margin:5px 0 18px}.final-score{font-size:22px;margin:10px 0}.final-wrong{font-size:17px;color:var(--muted)}.final-message{font-size:21px;font-weight:900;color:var(--blue);margin:22px auto;max-width:620px;line-height:1.4}.restart-quiz{border:0;background:var(--navy);color:white;border-radius:13px;padding:14px 20px;cursor:pointer;font-weight:800}.restart-quiz:hover{background:var(--blue)}
 .aboutgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -134,7 +134,7 @@ onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.
 <div class="wrap" id="quiz">
 <div class="quiz">
 <h2>🎯 Угадай герб района</h2>
-<p>Посмотри на герб и выбери район. После ответа появится следующий вопрос.</p>
+<p><strong>Всего 10 вопросов.</strong> Посмотри на герб и выбери район. После ответа появится следующий вопрос.</p>
 <div id="quizbody"></div>
 </div>
 </div>
@@ -198,60 +198,104 @@ document.getElementById('search').addEventListener('input',e=>{
  renderGrid(districts.filter(d=>(d.name+' '+d.center).toLowerCase().includes(q)));
 });
 
-const QUIZ_TOTAL=10;
-let score=0,wrong=0,questionNumber=0,locked=false,quizQuestions=[];
+const QUIZ_TOTAL = 10;
+let score = 0;
+let wrong = 0;
+let questionNumber = 0;
+let locked = false;
+let quizQuestions = [];
+let currentCorrect = null;
+
 function startQuiz(){
- score=0;
- wrong=0;
- questionNumber=0;
- locked=false;
- quizQuestions=[...districts].sort(()=>Math.random()-.5).slice(0,QUIZ_TOTAL);
- newQuiz();
+  score = 0;
+  wrong = 0;
+  questionNumber = 0;
+  locked = false;
+  quizQuestions = [...districts].sort(() => Math.random() - 0.5).slice(0, QUIZ_TOTAL);
+  showQuizQuestion();
 }
-function newQuiz(){
- if(questionNumber>=QUIZ_TOTAL){showQuizResult();return}
- locked=false;
- const correct=quizQuestions[questionNumber];
- let opts=[correct];
- while(opts.length<4){const x=districts[Math.floor(Math.random()*districts.length)];if(!opts.includes(x))opts.push(x)}
- opts.sort(()=>Math.random()-.5);
- document.getElementById('quizbody').innerHTML=`<div class="quiz-card">
- ${img(correct,'quiz-img')}
- <p><strong>Вопрос ${questionNumber+1} из ${QUIZ_TOTAL}</strong> · Правильных ответов: ${score}</p>
- <div class="answers">${opts.map(o=>`<button onclick="answer('${o.name.replaceAll("'","\\'")}','${correct.name.replaceAll("'","\\'")}')">${o.name} район</button>`).join('')}</div>
- <div class="result"></div>
- </div>`;
+
+function showQuizQuestion(){
+  if(questionNumber >= QUIZ_TOTAL){
+    showQuizResult();
+    return;
+  }
+
+  locked = false;
+  currentCorrect = quizQuestions[questionNumber];
+
+  const options = [currentCorrect];
+  while(options.length < 4){
+    const candidate = districts[Math.floor(Math.random() * districts.length)];
+    if(!options.includes(candidate)) options.push(candidate);
+  }
+  options.sort(() => Math.random() - 0.5);
+
+  const quizBody = document.getElementById('quizbody');
+  quizBody.innerHTML = `
+    <div class="quiz-card">
+      ${img(currentCorrect,'quiz-img')}
+      <p class="quiz-progress"><strong>Вопрос ${questionNumber + 1} из ${QUIZ_TOTAL}</strong> · Правильных: ${score} · Ошибок: ${wrong}</p>
+      <div class="answers">
+        ${options.map((option, index) => `
+          <button type="button" class="quiz-answer" data-index="${index}">${option.name} район</button>
+        `).join('')}
+      </div>
+      <div class="result" id="quiz-result"></div>
+    </div>`;
+
+  document.querySelectorAll('.quiz-answer').forEach((button, index) => {
+    button.addEventListener('click', () => answerQuiz(options[index]));
+  });
 }
-function answer(chosen,correct){
- if(locked)return;
- locked=true;
- const r=document.querySelector('.result');
- if(chosen===correct){
-   score++;
-   r.textContent='✅ Верно!';
- }else{
-   wrong++;
-   r.textContent='❌ Неверно. Правильный ответ: '+correct+' район';
- }
- questionNumber++;
- setTimeout(()=>{
-   if(questionNumber>=QUIZ_TOTAL) showQuizResult();
-   else newQuiz();
- },1100);
+
+function answerQuiz(chosen){
+  if(locked) return;
+  locked = true;
+
+  const result = document.getElementById('quiz-result');
+  const buttons = document.querySelectorAll('.quiz-answer');
+
+  buttons.forEach(button => button.disabled = true);
+
+  if(chosen === currentCorrect){
+    score++;
+    result.textContent = '✅ Верно!';
+    result.style.color = '#21845b';
+  } else {
+    wrong++;
+    result.textContent = '❌ Неверно. Правильный ответ: ' + currentCorrect.name + ' район';
+    result.style.color = '#b33a3a';
+  }
+
+  questionNumber++;
+
+  setTimeout(() => {
+    if(questionNumber >= QUIZ_TOTAL) showQuizResult();
+    else showQuizQuestion();
+  }, 900);
 }
+
 function showQuizResult(){
- locked=true;
- const message=wrong>2
-   ? '😕 Ты не справился с заданием. Попробуй ещё раз!'
-   : '🎉 Ты молодец! Ты справился с этим трудным заданием!';
- document.getElementById('quizbody').innerHTML=`<div class="quiz-card quiz-final">
-   <h3>🏁 Викторина завершена!</h3>
-   <p class="final-score">Твой результат: <strong>${score} из ${QUIZ_TOTAL}</strong></p>
-   <p class="final-wrong">Ошибок: <strong>${wrong}</strong></p>
-   <p class="final-message">${message}</p>
-   <button class="restart-quiz" onclick="startQuiz()">🔄 Пройти викторину ещё раз</button>
- </div>`;
+  locked = true;
+
+  let message;
+  if(wrong <= 2){
+    message = '🎉 Ты молодец! Ты справился с этим трудным заданием!';
+  } else {
+    message = '😕 Ты не справился с заданием. Попробуй ещё раз!';
+  }
+
+  document.getElementById('quizbody').innerHTML = `
+    <div class="quiz-card quiz-final">
+      <h3>🏁 Викторина завершена!</h3>
+      <p class="final-score">Твой результат: <strong>${score} из ${QUIZ_TOTAL}</strong></p>
+      <p class="final-wrong">Ошибок: <strong>${wrong}</strong></p>
+      <p class="final-message">${message}</p>
+      <button type="button" class="restart-quiz" onclick="startQuiz()">🔄 Пройти викторину ещё раз</button>
+    </div>`;
 }
+
 startQuiz();
 </script>
 </body>
