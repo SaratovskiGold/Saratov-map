@@ -69,9 +69,13 @@ button,input{font:inherit}
 .quiz-img{height:260px;width:100%;object-fit:contain;background:#f4f0e7;border-radius:16px}
 .answers{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
 .answers button{border:0;background:#e7eff0;color:var(--navy);border-radius:13px;padding:13px;cursor:pointer;font-weight:800}
-.answers button:hover{background:#d6e7e9}.answers button:disabled{opacity:.75;cursor:default}.quiz-progress{font-size:17px;margin:15px 0 5px}
+.answers button:hover{background:#d6e7e9}
 .result{min-height:26px;font-weight:900;margin-top:12px}
 .quiz-final{padding:38px 22px}.quiz-final h3{font-size:30px;color:var(--navy);margin:5px 0 18px}.final-score{font-size:22px;margin:10px 0}.final-wrong{font-size:17px;color:var(--muted)}.final-message{font-size:21px;font-weight:900;color:var(--blue);margin:22px auto;max-width:620px;line-height:1.4}.restart-quiz{border:0;background:var(--navy);color:white;border-radius:13px;padding:14px 20px;cursor:pointer;font-weight:800}.restart-quiz:hover{background:var(--blue)}
+.quiz-status{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-weight:900;color:var(--navy)}
+.quiz-progress{height:10px;background:#dfe9ea;border-radius:99px;overflow:hidden;margin-bottom:18px}.quiz-progress>span{display:block;height:100%;background:var(--blue);transition:width .25s}
+.quiz-answer{transition:.15s}.quiz-answer.correct{background:#d9f0df!important}.quiz-answer.wrong{background:#f7d9d9!important}.quiz-note{min-height:25px;margin-top:12px;font-weight:900}
+.quiz-version{font-size:12px;color:#78909a;margin-top:16px}
 .aboutgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .info{background:#f4f0e7;border-radius:20px;padding:20px}
 .info h3{margin-top:0;color:var(--navy)}
@@ -132,9 +136,9 @@ onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.
 </div>
 
 <div class="wrap" id="quiz">
-<div class="quiz">
-<h2>🎯 Угадай герб района</h2>
-<p><strong>Всего 10 вопросов.</strong> Посмотри на герб и выбери район. После ответа появится следующий вопрос.</p>
+<div class="quiz" id="quiz-app">
+<h2>🎯 Викторина: угадай герб</h2>
+<p id="quiz-intro">Викторина состоит ровно из 10 вопросов. За каждый вопрос можно получить 1 балл.</p>
 <div id="quizbody"></div>
 </div>
 </div>
@@ -198,102 +202,122 @@ document.getElementById('search').addEventListener('input',e=>{
  renderGrid(districts.filter(d=>(d.name+' '+d.center).toLowerCase().includes(q)));
 });
 
-const QUIZ_TOTAL = 10;
-let score = 0;
-let wrong = 0;
-let questionNumber = 0;
-let locked = false;
-let quizQuestions = [];
-let currentCorrect = null;
 
-function startQuiz(){
-  score = 0;
-  wrong = 0;
-  questionNumber = 0;
-  locked = false;
-  quizQuestions = [...districts].sort(() => Math.random() - 0.5).slice(0, QUIZ_TOTAL);
-  showQuizQuestion();
+/* ===== НОВАЯ ВИКТОРИНА: РОВНО 10 ВОПРОСОВ ===== */
+const QUIZ_LIMIT = 10;
+let quizIndex = 0;
+let quizRight = 0;
+let quizWrong = 0;
+let quizLocked = false;
+let quizSet = [];
+
+function shuffleArray(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
 }
 
-function showQuizQuestion(){
-  if(questionNumber >= QUIZ_TOTAL){
-    showQuizResult();
+function startQuiz(){
+  quizIndex = 0;
+  quizRight = 0;
+  quizWrong = 0;
+  quizLocked = false;
+  quizSet = shuffleArray(districts).slice(0, QUIZ_LIMIT);
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion(){
+  const box = document.getElementById('quizbody');
+  if(!box) return;
+
+  if(quizIndex >= QUIZ_LIMIT){
+    renderQuizFinal();
     return;
   }
 
-  locked = false;
-  currentCorrect = quizQuestions[questionNumber];
+  const correct = quizSet[quizIndex];
+  const wrongPool = shuffleArray(districts.filter(d => d !== correct)).slice(0,3);
+  const options = shuffleArray([correct, ...wrongPool]);
 
-  const options = [currentCorrect];
-  while(options.length < 4){
-    const candidate = districts[Math.floor(Math.random() * districts.length)];
-    if(!options.includes(candidate)) options.push(candidate);
-  }
-  options.sort(() => Math.random() - 0.5);
-
-  const quizBody = document.getElementById('quizbody');
-  quizBody.innerHTML = `
+  box.innerHTML = `
     <div class="quiz-card">
-      ${img(currentCorrect,'quiz-img')}
-      <p class="quiz-progress"><strong>Вопрос ${questionNumber + 1} из ${QUIZ_TOTAL}</strong> · Правильных: ${score} · Ошибок: ${wrong}</p>
-      <div class="answers">
-        ${options.map((option, index) => `
-          <button type="button" class="quiz-answer" data-index="${index}">${option.name} район</button>
+      <div class="quiz-status">
+        <span>Вопрос ${quizIndex + 1} из ${QUIZ_LIMIT}</span>
+        <span>Правильных: ${quizRight} · Ошибок: ${quizWrong}</span>
+      </div>
+      <div class="quiz-progress"><span style="width:${((quizIndex)/QUIZ_LIMIT)*100}%"></span></div>
+      ${img(correct,'quiz-img')}
+      <h3>Какому району принадлежит этот герб?</h3>
+      <div class="answers" id="quiz-answers">
+        ${options.map((d,n)=>`
+          <button type="button" class="quiz-answer" data-name="${encodeURIComponent(d.name)}">${n+1}. ${d.name} район</button>
         `).join('')}
       </div>
-      <div class="result" id="quiz-result"></div>
-    </div>`;
+      <div class="quiz-note" id="quiz-note"></div>
+      <div class="quiz-version">Викторина • версия 2.0 • 10 вопросов</div>
+    </div>
+  `;
 
-  document.querySelectorAll('.quiz-answer').forEach((button, index) => {
-    button.addEventListener('click', () => answerQuiz(options[index]));
+  document.querySelectorAll('#quiz-answers .quiz-answer').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      checkQuizAnswer(decodeURIComponent(btn.dataset.name), correct.name);
+    });
   });
 }
 
-function answerQuiz(chosen){
-  if(locked) return;
-  locked = true;
+function checkQuizAnswer(chosen, correctName){
+  if(quizLocked) return;
+  quizLocked = true;
 
-  const result = document.getElementById('quiz-result');
-  const buttons = document.querySelectorAll('.quiz-answer');
+  const buttons = [...document.querySelectorAll('#quiz-answers .quiz-answer')];
+  buttons.forEach(b=>b.disabled=true);
 
-  buttons.forEach(button => button.disabled = true);
+  const note = document.getElementById('quiz-note');
 
-  if(chosen === currentCorrect){
-    score++;
-    result.textContent = '✅ Верно!';
-    result.style.color = '#21845b';
-  } else {
-    wrong++;
-    result.textContent = '❌ Неверно. Правильный ответ: ' + currentCorrect.name + ' район';
-    result.style.color = '#b33a3a';
+  if(chosen === correctName){
+    quizRight++;
+    note.textContent = '✅ Правильно!';
+    note.style.color = '#217a45';
+    const b = buttons.find(x=>decodeURIComponent(x.dataset.name)===chosen);
+    if(b) b.classList.add('correct');
+  }else{
+    quizWrong++;
+    note.textContent = '❌ Неверно. Правильный ответ: ' + correctName + ' район.';
+    note.style.color = '#a33a3a';
+    const chosenBtn = buttons.find(x=>decodeURIComponent(x.dataset.name)===chosen);
+    const correctBtn = buttons.find(x=>decodeURIComponent(x.dataset.name)===correctName);
+    if(chosenBtn) chosenBtn.classList.add('wrong');
+    if(correctBtn) correctBtn.classList.add('correct');
   }
 
-  questionNumber++;
-
-  setTimeout(() => {
-    if(questionNumber >= QUIZ_TOTAL) showQuizResult();
-    else showQuizQuestion();
-  }, 900);
+  setTimeout(()=>{
+    quizIndex++;
+    quizLocked = false;
+    renderQuizQuestion();
+  }, 1000);
 }
 
-function showQuizResult(){
-  locked = true;
-
-  let message;
-  if(wrong <= 2){
-    message = '🎉 Ты молодец! Ты справился с этим трудным заданием!';
-  } else {
-    message = '😕 Ты не справился с заданием. Попробуй ещё раз!';
-  }
+function renderQuizFinal(){
+  const good = quizWrong <= 2;
+  const message = good
+    ? '🎉 Ты молодец! Ты справился с этим трудным заданием!'
+    : '😕 Ты не справился с заданием. Попробуй ещё раз!';
 
   document.getElementById('quizbody').innerHTML = `
     <div class="quiz-card quiz-final">
       <h3>🏁 Викторина завершена!</h3>
-      <p class="final-score">Твой результат: <strong>${score} из ${QUIZ_TOTAL}</strong></p>
-      <p class="final-wrong">Ошибок: <strong>${wrong}</strong></p>
+      <p class="final-score">Твой результат: <strong>${quizRight} из ${QUIZ_LIMIT}</strong></p>
+      <p class="final-wrong">Неверных ответов: <strong>${quizWrong}</strong></p>
       <p class="final-message">${message}</p>
-      <button type="button" class="restart-quiz" onclick="startQuiz()">🔄 Пройти викторину ещё раз</button>
-    </div>`;
+      <button type="button" class="restart-quiz" id="restartQuiz">🔄 Пройти викторину ещё раз</button>
+      <div class="quiz-version">Новая версия • ровно 10 вопросов</div>
+    </div>
+  `;
+
+  document.getElementById('restartQuiz').addEventListener('click', startQuiz);
 }
 
 startQuiz();
