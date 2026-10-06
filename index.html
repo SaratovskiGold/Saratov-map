@@ -31,15 +31,15 @@ button,input{font:inherit}
 .section-title p{color:var(--muted);margin:0;max-width:650px}
 .panel{background:#fff;border-radius:28px;padding:24px;box-shadow:var(--shadow);margin-bottom:24px}
 .map-layout{display:grid;grid-template-columns:1.6fr .8fr;gap:20px}
-.mapbox{position:relative;width:100%;border-radius:22px;overflow:hidden;background:#e1eee9;line-height:0}
+.mapbox{position:relative;width:100%;border-radius:22px;overflow:hidden;background:radial-gradient(circle at 20% 20%,#ffffff 0,#eef6f3 42%,#dcebe7 100%);border:1px solid #d5e3df;box-shadow:inset 0 0 0 8px #ffffff55;line-height:0}
 .mapbox>img{width:100%;height:auto;display:block}
 .pins{position:absolute;inset:0}
 .pin{position:absolute;transform:translate(-50%,-50%);width:36px;height:36px;padding:3px;border:3px solid white;border-radius:50%;background:white;box-shadow:0 6px 18px #102f4360;cursor:pointer;transition:.18s}
 .pin img{width:100%;height:100%;object-fit:contain}
-.pin:hover{transform:translate(-50%,-50%) scale(1.3);z-index:4}
+.pin:hover{transform:translate(-50%,-50%) scale(1.3);z-index:4}.pin:focus-visible{outline:3px solid #c69b45;outline-offset:3px;z-index:5}
 .pin.saratovsky{outline:2px solid #c69b45;outline-offset:2px}
-.mapinfo{background:var(--navy);color:white;border-radius:22px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
-.mapinfo h3{font-size:25px;margin-top:0}
+.mapinfo{background:linear-gradient(160deg,#102f43,#1d6682);color:white;border-radius:22px;padding:24px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 12px 30px #102f4320}.map-legend{margin-top:18px;padding:12px 14px;border:1px solid #ffffff22;border-radius:14px;background:#ffffff10;color:#eaf5f6;font-size:13px;line-height:1.5}
+.mapinfo h3{font-size:25px;margin-top:0}.map-legend-overlay{position:absolute;left:14px;bottom:14px;right:14px;padding:9px 12px;border-radius:12px;background:#102f43d9;color:#fff;font-size:12px;line-height:1.35;text-align:center;backdrop-filter:blur(4px)}
 .mapinfo p{color:#d6e7eb;line-height:1.7}
 .searchrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .search{flex:1;min-width:240px;border:2px solid #dbe3e6;background:#fbfcfc;border-radius:15px;padding:14px 16px;outline:none}
@@ -80,7 +80,7 @@ footer{padding:35px 20px;text-align:center;color:var(--muted);font-size:13px}
 @media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr}.aboutgrid{grid-template-columns:1fr}.hero{margin-top:35px}}
 @media(max-width:500px){.grid{grid-template-columns:1fr}.answers{grid-template-columns:1fr}.card-img{height:250px}}
 
-.quiz-active #atlas,.quiz-active #catalog{display:none}
+.quiz-active #atlas,.quiz-active #catalog{display:none}.quiz-active .navlinks button:nth-child(1),.quiz-active .navlinks button:nth-child(2){display:none}.quiz-active .quiz{box-shadow:0 18px 50px rgba(20,45,60,.18)}
 .quiz-active #quiz{padding-top:40px}
 .quiz-start-note{background:#ffffff16;border:1px solid #ffffff25;border-radius:16px;padding:14px 16px;margin:12px 0 20px;color:#eaf5f6}
 .quiz-input{width:min(620px,100%);border:2px solid #dbe3e6;border-radius:14px;padding:14px 16px;font-size:17px;outline:none}
@@ -93,6 +93,19 @@ footer{padding:35px 20px;text-align:center;color:var(--muted);font-size:13px}
 .quiz-progress span{display:block;height:100%;background:#c69b45;transition:.25s}
 .quiz-clue{font-size:19px;line-height:1.7;max-width:780px;margin:18px auto;color:#263942}
 .quiz-small{color:#65737c;font-size:14px}
+
+/* Общий фон сайта и лёгкие анимации */
+body{background:linear-gradient(135deg,#f7fbfa 0%,#eef5f3 45%,#e9f0f6 100%);background-attachment:fixed;position:relative;overflow-x:hidden;}
+body:before,body:after{content:"";position:fixed;z-index:-1;border-radius:50%;pointer-events:none;filter:blur(2px);opacity:.45;animation:floatBlob 12s ease-in-out infinite;}
+body:before{width:360px;height:360px;left:-140px;top:12vh;background:radial-gradient(circle,#d9ece7 0,transparent 70%);}
+body:after{width:420px;height:420px;right:-180px;bottom:4vh;background:radial-gradient(circle,#dfe9f5 0,transparent 70%);animation-delay:-6s;}
+@keyframes floatBlob{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-16px) scale(1.04)}}
+.card,.panel,.quiz,.hero,.section{animation:softAppear .55s ease both;}
+@keyframes softAppear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+button,.pin,.navlinks a{transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease;}
+button:hover,.navlinks a:hover{transform:translateY(-2px);}
+.pin:hover{transform:translate(-50%,-50%) scale(1.08);}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
 </style>
 </head>
 <body>
@@ -120,12 +133,12 @@ footer{padding:35px 20px;text-align:center;color:var(--muted);font-size:13px}
 
 <main>
 <div class="wrap" id="atlas">
-<div class="section-title"><div><h2>Карта гербов</h2><p>Каждая точка открывает подробную карточку района.</p></div></div>
+<div class="section-title"><div><h2>Карта гербов</h2><p>Значки размещены по территории соответствующих районов; нажми на значок, чтобы открыть подробную карточку.</p></div></div>
 <div class="panel map-layout">
 <div class="mapbox">
 <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Map_of_Saratov_Oblast_Admin.svg" alt="Карта Саратовской области"
 onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 360'%3E%3Crect width='300' height='360' rx='25' fill='%23f1eadb'/%3E%3Cpath d='M60 45h180v125c0 75-38 110-90 140-52-30-90-65-90-140z' fill='%23fff' stroke='%23b78a2c' stroke-width='7'/%3E%3Ccircle cx='150' cy='125' r='35' fill='%23c99b3b'/%3E%3Cpath d='M100 185h100M150 155v80' stroke='%231d506d' stroke-width='9'/%3E%3Ctext x='150' y='325' text-anchor='middle' font-family='Arial' font-size='20' fill='%231d506d'%3EГерб%3C/text%3E%3C/svg%3E'">
-<div id="pins"></div>
+<div id="pins"></div><div class="map-legend-overlay">Нажми на значок герба, чтобы открыть карточку района</div>
 </div>
 <div class="mapinfo">
 <div><h3>Как пользоваться?</h3><p>Нажми на круг с гербом, чтобы открыть название района, административный центр, дату утверждения и подробное объяснение символики.</p><p>Если удобнее искать по названию, используй каталог ниже.</p></div>
@@ -148,7 +161,7 @@ onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.
 <div class="wrap" id="quiz">
 <div class="quiz">
 <h2>🎯 Викторина по гербам</h2>
-<p>Во время викторины карта, каталог и изображения гербов автоматически скрываются.</p>
+<p>Во время викторины карта, каталог и все изображения гербов автоматически скрываются — подсмотреть ответ через сайт нельзя.</p>
 <div class="quiz-start-note">Здесь нет вариантов ответа: введи название района самостоятельно. После первой ошибки появится небольшая сложная подсказка.</div>
 <div id="quizbody"></div>
 </div>
@@ -273,7 +286,7 @@ function checkTypedAnswer(){
     input.value=''; input.focus();
   }else{
     locked=true;
-    result.innerHTML=`❌ Второй ответ тоже неверный.<br><strong>Правильный ответ: ${correct.name} район.</strong><br><button class="quiz-next" onclick="nextQuizQuestion()">Следующий вопрос →</button>`;
+    result.innerHTML=`❌ Обе попытки использованы. Ответ не показывается до конца викторины.<br><button class="quiz-next" onclick="nextQuizQuestion()">Следующий вопрос →</button>`;
     input.disabled=true;
   }
 }
