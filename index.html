@@ -80,7 +80,7 @@ footer{padding:35px 20px;text-align:center;color:var(--muted);font-size:13px}
 @media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr}.aboutgrid{grid-template-columns:1fr}.hero{margin-top:35px}}
 @media(max-width:500px){.grid{grid-template-columns:1fr}.answers{grid-template-columns:1fr}.card-img{height:250px}}
 
-.quiz-active #atlas,.quiz-active #catalog{display:none}.quiz-active .navlinks button:nth-child(1),.quiz-active .navlinks button:nth-child(2){display:none}.quiz-active .quiz{box-shadow:0 18px 50px rgba(20,45,60,.18)}
+.quiz-active .quiz{box-shadow:0 18px 50px rgba(20,45,60,.18)}
 .quiz-active #quiz{padding-top:40px}
 .quiz-start-note{background:#ffffff16;border:1px solid #ffffff25;border-radius:16px;padding:14px 16px;margin:12px 0 20px;color:#eaf5f6}
 .quiz-input{width:min(620px,100%);border:2px solid #dbe3e6;border-radius:14px;padding:14px 16px;font-size:17px;outline:none}
@@ -94,18 +94,104 @@ footer{padding:35px 20px;text-align:center;color:var(--muted);font-size:13px}
 .quiz-clue{font-size:19px;line-height:1.7;max-width:780px;margin:18px auto;color:#263942}
 .quiz-small{color:#65737c;font-size:14px}
 
-/* Общий фон сайта и лёгкие анимации */
-body{background:linear-gradient(135deg,#f7fbfa 0%,#eef5f3 45%,#e9f0f6 100%);background-attachment:fixed;position:relative;overflow-x:hidden;}
-body:before,body:after{content:"";position:fixed;z-index:-1;border-radius:50%;pointer-events:none;filter:blur(2px);opacity:.45;animation:floatBlob 12s ease-in-out infinite;}
-body:before{width:360px;height:360px;left:-140px;top:12vh;background:radial-gradient(circle,#d9ece7 0,transparent 70%);}
-body:after{width:420px;height:420px;right:-180px;bottom:4vh;background:radial-gradient(circle,#dfe9f5 0,transparent 70%);animation-delay:-6s;}
-@keyframes floatBlob{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-16px) scale(1.04)}}
-.card,.panel,.quiz,.hero,.section{animation:softAppear .55s ease both;}
-@keyframes softAppear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-button,.pin,.navlinks a{transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease;}
-button:hover,.navlinks a:hover{transform:translateY(-2px);}
-.pin:hover{transform:translate(-50%,-50%) scale(1.08);}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
+/* ===== Выразительный фон сайта ===== */
+body{
+  position:relative;
+  overflow-x:hidden;
+  background:
+    radial-gradient(circle at 18% 10%,rgba(255,255,255,.95),transparent 24%),
+    radial-gradient(circle at 82% 28%,rgba(110,180,170,.24),transparent 30%),
+    radial-gradient(circle at 50% 100%,rgba(198,155,69,.18),transparent 34%),
+    linear-gradient(135deg,#dceeea 0%,#eef7f4 38%,#e8eef4 70%,#f5eee0 100%);
+  background-size:100% 100%;
+}
+
+/* Светящиеся декоративные орбы */
+body::before,
+body::after{
+  content:"";
+  position:fixed;
+  width:520px;
+  height:520px;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:-1;
+  filter:blur(35px);
+  opacity:.48;
+  animation:siteOrb 16s ease-in-out infinite alternate;
+}
+body::before{
+  left:-260px;
+  top:8%;
+  background:
+    radial-gradient(circle at 55% 50%,rgba(56,132,123,.34) 0,rgba(56,132,123,.12) 34%,transparent 68%);
+}
+body::after{
+  right:-280px;
+  bottom:-80px;
+  background:
+    radial-gradient(circle at 45% 45%,rgba(198,155,69,.30) 0,rgba(198,155,69,.10) 35%,transparent 70%);
+  animation-delay:-8s;
+}
+@keyframes siteOrb{
+  0%{transform:translate3d(0,0,0) scale(.92)}
+  50%{transform:translate3d(55px,-35px,0) scale(1.08)}
+  100%{transform:translate3d(-25px,45px,0) scale(1)}
+}
+
+/* Тонкая декоративная сетка поверх фона */
+body{
+  background-image:
+    linear-gradient(rgba(255,255,255,.18) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.18) 1px,transparent 1px),
+    radial-gradient(circle at 18% 10%,rgba(255,255,255,.95),transparent 24%),
+    radial-gradient(circle at 82% 28%,rgba(110,180,170,.24),transparent 30%),
+    radial-gradient(circle at 50% 100%,rgba(198,155,69,.18),transparent 34%),
+    linear-gradient(135deg,#dceeea 0%,#eef7f4 38%,#e8eef4 70%,#f5eee0 100%);
+  background-size:48px 48px,48px 48px,100% 100%,100% 100%,100% 100%,100% 100%;
+}
+
+/* Стеклянный эффект для основных панелей */
+header,.section,.quiz{
+  background-color:rgba(255,255,255,.78);
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+  box-shadow:0 14px 40px rgba(31,67,75,.10);
+}
+
+/* Плавное появление основных секций */
+header,.section,.quiz,.mapbox,.catalog-grid,.modal-card{
+  animation:softAppear .65s ease both;
+}
+@keyframes softAppear{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Лёгкое движение кнопок и карточек */
+button,.navlinks button,.pin,.card{
+  transition:transform .22s ease,box-shadow .22s ease,filter .22s ease;
+}
+button:hover,.navlinks button:hover{
+  transform:translateY(-2px);
+}
+.card:hover{
+  transform:translateY(-4px);
+}
+.pin:hover{
+  transform:translate(-50%,-50%) scale(1.12);
+  filter:drop-shadow(0 5px 8px rgba(30,55,65,.25));
+}
+
+/* Уважаем системную настройку уменьшения движения */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -138,7 +224,7 @@ button:hover,.navlinks a:hover{transform:translateY(-2px);}
 <div class="mapbox">
 <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Map_of_Saratov_Oblast_Admin.svg" alt="Карта Саратовской области"
 onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 360'%3E%3Crect width='300' height='360' rx='25' fill='%23f1eadb'/%3E%3Cpath d='M60 45h180v125c0 75-38 110-90 140-52-30-90-65-90-140z' fill='%23fff' stroke='%23b78a2c' stroke-width='7'/%3E%3Ccircle cx='150' cy='125' r='35' fill='%23c99b3b'/%3E%3Cpath d='M100 185h100M150 155v80' stroke='%231d506d' stroke-width='9'/%3E%3Ctext x='150' y='325' text-anchor='middle' font-family='Arial' font-size='20' fill='%231d506d'%3EГерб%3C/text%3E%3C/svg%3E'">
-<div id="pins"></div><div class="map-legend-overlay">Нажми на значок герба, чтобы открыть карточку района</div>
+<div id="pins"></div>
 </div>
 <div class="mapinfo">
 <div><h3>Как пользоваться?</h3><p>Нажми на круг с гербом, чтобы открыть название района, административный центр, дату утверждения и подробное объяснение символики.</p><p>Если удобнее искать по названию, используй каталог ниже.</p></div>
