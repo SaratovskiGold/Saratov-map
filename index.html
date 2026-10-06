@@ -194,8 +194,7 @@ function openModal(i){
  document.getElementById('modalcontent').innerHTML=`<div class="detail">
  <div>${img(d,'detail-img')}</div>
  <div><h2>${d.name} район</h2><div class="badges"><span class="badge">📍 ${d.center}</span><span class="badge">📅 ${d.date}</span></div>
- <h3>О районе и его гербе</h3><p>${d.description}</p>
- <h3>Что означает композиция?</h3><p>Главные фигуры герба выбраны не случайно: они связывают символику территории с природой, историей, культурой или традиционными занятиями жителей. При внимательном рассмотрении герба можно увидеть несколько смысловых уровней — от конкретного предмета до общего образа района.</p>
+ <h3>Кратко о гербе</h3><p>${d.desc}</p>
  </div></div>`;
  document.getElementById('modal').classList.add('open');
 }
