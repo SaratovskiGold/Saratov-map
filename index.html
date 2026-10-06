@@ -39,8 +39,8 @@ button,input{font:inherit}
 .pin{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;padding:0;border:3px solid white;border-radius:50%;background:#c69b45;color:#102f43;box-shadow:0 5px 18px #102f4360;cursor:pointer;transition:.18s;z-index:2;font:900 11px/28px Arial,sans-serif;text-align:center}
 .pin img{display:none}
 .pin::before{content:attr(data-number)}
-.pin::after{content:attr(title);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%) translateY(4px);opacity:0;pointer-events:none;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;padding:7px 10px;border-radius:10px;background:#102f43;color:#fff;font:700 12px/1.2 Arial,sans-serif;box-shadow:0 5px 18px #102f4360;transition:.18s}
-.pin:hover{transform:translate(-50%,-50%) scale(1.18);z-index:5}
+
+.pin:hover{transform:translate(-50%,-50%) scale(1.16);z-index:5}.pin:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}.answers button.correct{background:#d8f0df;border:2px solid #4b9b64}.answers button.wrong{background:#f7dddd;border:2px solid #c85c5c}.answers button:disabled{cursor:default;opacity:.9}
 .pin:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
 .map-legend{margin-top:12px;font-size:12px;color:#65737c;text-align:center}
 .mapinfo{background:var(--navy);color:white;border-radius:22px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
@@ -82,7 +82,7 @@ button,input{font:inherit}
 footer{padding:35px 20px;text-align:center;color:var(--muted);font-size:13px}
 @media(max-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}.map-layout{grid-template-columns:1fr}}
 @media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr}.aboutgrid{grid-template-columns:1fr}.hero{margin-top:35px}}
-@media(max-width:500px){.grid{grid-template-columns:1fr}.answers{grid-template-columns:1fr}.card-img{height:250px}.pin{width:38px;height:38px}}
+@media(max-width:500px){.grid{grid-template-columns:1fr}.answers{grid-template-columns:1fr}.card-img{height:250px}.pin{width:46px;height:56px}}
 </style>
 </head>
 <body>
@@ -233,37 +233,39 @@ function showQuizQuestion(){
  if(questionNumber>=QUIZ_TOTAL){showQuizResult();return;}
  locked=false;attempt=1;
  const d=quizQuestions[questionNumber];
+ const wrongOptions=[...districts].filter(x=>x!==d).sort(()=>Math.random()-.5).slice(0,3);
+ const options=[d,...wrongOptions].sort(()=>Math.random()-.5);
  document.getElementById('quizbody').innerHTML=`<div class="quiz-card">
  ${img(d,'quiz-img')}
  <p><strong>Вопрос ${questionNumber+1} из ${QUIZ_TOTAL}</strong> · Правильных: ${score} · Ошибок: ${wrong}</p>
- <p>Напиши название района, которому принадлежит этот герб.</p>
- <input id="quizanswer" class="search" style="width:100%;margin-top:6px" autocomplete="off" placeholder="Название района">
- <button class="filter" style="margin-top:12px;background:#c69b45;color:#102f43;font-weight:900" onclick="checkTypedAnswer()">Ответить</button>
+ <p><strong>Какому району принадлежит этот герб?</strong></p>
+ <div class="answers">${options.map((o,i)=>`<button type="button" onclick="checkQuizOption(${i})" data-name="${o.name.replace(/"/g,'&quot;')}">${o.name} район</button>`).join('')}</div>
  <div class="result" id="quizresult"></div>
  </div>`;
- const input=document.getElementById('quizanswer');
- input.focus(); input.addEventListener('keydown',e=>{if(e.key==='Enter')checkTypedAnswer()});
 }
-function checkTypedAnswer(){
+function checkQuizOption(index){
  if(locked)return;
- const input=document.getElementById('quizanswer');
- const r=document.getElementById('quizresult');
+ const buttons=[...document.querySelectorAll('.answers button')];
+ const selected=buttons[index];
  const d=quizQuestions[questionNumber];
- const value=input.value.trim();
- if(!value){r.textContent='Напиши ответ в поле выше.';return;}
- if(answerMatches(value,d.name)){
-   score++; locked=true; r.textContent='✅ Верно!';
+ const r=document.getElementById('quizresult');
+ const isCorrect=selected.dataset.name===d.name;
+ if(isCorrect){
+   selected.classList.add('correct'); score++; locked=true;
+   buttons.forEach(b=>b.disabled=true);
+   r.textContent='✅ Верно!';
    setTimeout(()=>{questionNumber++;showQuizQuestion()},900);
    return;
  }
- wrong++;
+ wrong++; selected.classList.add('wrong'); selected.disabled=true;
  if(attempt===1){
    attempt=2;
-   r.innerHTML='❌ Пока неверно.<br><small>'+getHint(d)+'</small><br><span style="color:#1d6682">Попробуй ещё раз.</span>';
-   input.value=''; input.focus();
+   r.innerHTML='❌ Неверно.<br><small>'+getHint(d)+'</small><br><span style="color:#1d6682">Попробуй выбрать ещё раз.</span>';
  }else{
-   locked=true;
-   r.innerHTML='❌ Неверно. Правильный ответ: <strong>'+d.name+' район</strong>.';
+   locked=true; buttons.forEach(b=>b.disabled=true);
+   const correctButton=buttons.find(b=>b.dataset.name===d.name);
+   if(correctButton)correctButton.classList.add('correct');
+   r.innerHTML='❌ Неверно второй раз. Правильный ответ: <strong>'+d.name+' район</strong>.';
    setTimeout(()=>{questionNumber++;showQuizQuestion()},1800);
  }
 }
